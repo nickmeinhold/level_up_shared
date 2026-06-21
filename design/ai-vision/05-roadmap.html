@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Roadmap - Level Up AI Vision</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <a class="brand" href="index.html">LEVEL&nbsp;UP<span class="dot">.</span> <span style="color:var(--text-soft);font-weight:600">AI Vision</span></a>
+    <span class="spacer"></span>
+    <a class="nav" href="index.html">Overview</a>
+    <a class="nav" href="05-roadmap.html">Roadmap</a>
+    <a class="nav" href="technical-design.html">Tech</a>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="crumb"><a href="index.html">← Back to overview</a></p>
+    <span class="kicker">🗺️ The build order</span>
+    <h1>The path,<br>not the cliff.</h1>
+    <p class="lead">Three waves. Each one ships something useful on its own, and earns the right to build the next. You feel value in Wave 1, long before the flagship lands. Nobody has to wait for the whole vision to arrive before the app starts giving you time back.</p>
+    <p class="lead" style="font-size:17px;margin-top:18px;color:#aeb6c6">We sequence by what is cheap and certain first, and what is ambitious and involved last. Same thesis throughout: AI gives the coach reach, it does not replace the coach.</p>
+  </div>
+</header>
+
+<!-- THE SHAPE -->
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">The shape of it</p>
+    <h2>Three waves, in order</h2>
+    <p class="lead">Read this top to bottom. Each card is a wave. Each wave stands up on the one before it.</p>
+
+    <div class="grid grid-3" style="margin-top:34px">
+      <div class="card">
+        <span class="pill now">Wave 1 · Now</span>
+        <h3 style="font-size:21px">Capture &amp; Assist</h3>
+        <p class="muted">Your coaching brain goes into the app, and a companion starts answering athletes in your voice while drafting your replies for you.</p>
+        <p style="margin-bottom:0"><span class="pill ghost">Effort: M</span> <span class="pill tech">Lowest risk</span></p>
+      </div>
+      <div class="card">
+        <span class="pill next">Wave 2 · Next</span>
+        <h3 style="font-size:21px">Generate &amp; Act</h3>
+        <p class="muted">The app drafts whole workouts from your drill library and handles assignments, all on your say-so with one-tap approval.</p>
+        <p style="margin-bottom:0"><span class="pill ghost">Effort: M</span> <span class="pill tech">Builds on Wave 1</span></p>
+      </div>
+      <div class="card">
+        <span class="pill north">Wave 3 · North star</span>
+        <h3 style="font-size:21px">See &amp; Correct</h3>
+        <p class="muted">On-device form analysis on every rep, instant encouragement for athletes, and a smart triage queue that puts your eyes where they matter.</p>
+        <p style="margin-bottom:0"><span class="pill ghost">Effort: L</span> <span class="pill north">The flagship</span></p>
+      </div>
+    </div>
+
+    <div class="callout volt" style="margin-top:38px">
+      <span class="label">The dependency spine</span>
+      <p>Each wave is a floor the next one stands on. <strong>Capture</strong> the knowledge, so the companion has something true to say. <strong>Converse</strong> from it, so athletes and coach trust the voice. <strong>Act</strong> on it, so the app can build and assign once the trust is there. <strong>See</strong> the reps, and ground the feedback in everything captured above.</p>
+      <div class="flow" style="margin-top:18px">
+        <div class="step"><span class="s-num">FLOOR 1</span><strong>Capture</strong><span>Coach knowledge base</span></div>
+        <span class="arrow-h">→</span>
+        <div class="step"><span class="s-num">FLOOR 2</span><strong>Converse</strong><span>Companion + draft replies</span></div>
+        <span class="arrow-h">→</span>
+        <div class="step"><span class="s-num">FLOOR 3</span><strong>Act</strong><span>Generate + assign</span></div>
+        <span class="arrow-h">→</span>
+        <div class="step"><span class="s-num">FLOOR 4</span><strong>See</strong><span>Form analysis on every rep</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WAVE 1 -->
+<section class="section band">
+  <div class="wrap">
+    <span class="pill now">Wave 1 · Now</span>
+    <h2 style="margin-top:14px">Capture &amp; Assist</h2>
+    <p class="lead">Put your coaching into the app, and let it start carrying the after-hours questions and the blank-message-box problem right away.</p>
+
+    <div class="grid grid-2" style="margin-top:30px">
+      <div class="card">
+        <h3 style="font-size:20px;margin-top:0">What ships</h3>
+        <ul class="clean">
+          <li>A <strong>coach knowledge base</strong> with a simple capture flow, so your drills, cues, progressions and rules of thumb live in the app. <a href="01-coach-knowledge.html">Pillar 01 →</a></li>
+          <li>An <strong>athlete coach-companion</strong> in chat that answers from that knowledge, in your voice, around the clock.</li>
+          <li>A <strong>coach-side draft-reply assistant</strong> so you never start a message from nothing. <a href="02-conversational-agents.html">Pillar 02 →</a></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="font-size:20px;margin-top:0">Why this is first</h3>
+        <ul class="clean">
+          <li>It rides <strong>entirely on the chat that already works</strong> in the app today. No new plumbing for athletes to learn.</li>
+          <li>It is the <strong>lowest technical risk</strong> of the three waves.</li>
+          <li>It pays off <strong>immediately</strong>, on day one, in your daily messages.</li>
+          <li>Everything later depends on the knowledge base existing, so this has to come first anyway.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="ba">
+      <div class="before">
+        <h4>Athlete feels</h4>
+        <p>Asks a question at 9pm, gets a real answer at 9pm, in a voice that sounds like their coach, not a search engine.</p>
+      </div>
+      <div class="after">
+        <h4>Coach feels</h4>
+        <p>Opens the app to find replies already drafted and the same beginner questions already handled. You edit and approve instead of typing from scratch.</p>
+      </div>
+    </div>
+
+    <details>
+      <summary>Rough build scope</summary>
+      <ul class="clean">
+        <li>An <strong>AI service layer</strong>: a Firebase function that calls an LLM, so no keys or model logic ever sit on a phone.</li>
+        <li>A <strong>knowledge store</strong> plus grounding (RAG) so answers are pulled from your material, not invented.</li>
+        <li>A <strong>new chat message author</strong> (the companion) added to the existing chat model.</li>
+        <li>A <strong>persona config</strong> that captures your tone and standards.</li>
+      </ul>
+      <p class="muted">Detail in the <a href="technical-design.html">technical design</a>.</p>
+    </details>
+
+    <p style="margin-top:6px"><strong>Unlocks:</strong> the knowledge floor that Wave 2 builds on, and the trust that makes athletes happy to let the app draft for them.</p>
+  </div>
+</section>
+
+<!-- WAVE 2 -->
+<section class="section band-dark">
+  <div class="wrap">
+    <span class="pill next">Wave 2 · Next</span>
+    <h2 style="margin-top:14px">Generate &amp; Act</h2>
+    <p class="lead">Now that the app knows your coaching, let it assemble the busywork: full workouts drafted from your library, assignments handled, every decision still yours.</p>
+
+    <div class="grid grid-2" style="margin-top:30px">
+      <div class="card">
+        <h3 style="font-size:20px;margin-top:0">What ships</h3>
+        <ul class="clean">
+          <li><strong>Workout generation</strong> from your own drill library. "Build Marcus a 3-week shooting block" and a draft appears, made of your drills.</li>
+          <li><strong>Assignment actions</strong>. "Assign yesterday's workout to the U16s" and it is staged for one tap.</li>
+          <li><strong>Human-in-the-loop approval</strong> on everything that touches an athlete. <a href="03-agentic-actions.html">Pillar 03 →</a></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="font-size:20px;margin-top:0">Why this is second</h3>
+        <ul class="clean">
+          <li>It needs the <strong>knowledge base from Wave 1</strong> to draft anything that sounds like you.</li>
+          <li>It leans on the <strong>structured workout and drill data</strong> the app already stores.</li>
+          <li>Higher stakes: it writes athlete-facing things, so the <strong>approval and audit</strong> safety net has to be built before it can be trusted.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="ba">
+      <div class="before">
+        <h4>Athlete feels</h4>
+        <p>Programs arrive faster and more often, tuned to what they actually asked for, never generic.</p>
+      </div>
+      <div class="after">
+        <h4>Coach feels</h4>
+        <p>The blank-workout-builder is gone. You shape and approve instead of assembling drill by drill. Your library becomes a creative engine.</p>
+      </div>
+    </div>
+
+    <details>
+      <summary>Rough build scope</summary>
+      <ul class="clean">
+        <li><strong>Tool use / function calling</strong> so the AI can propose concrete app actions, not just text.</li>
+        <li>An <strong>action allow-list</strong>: a fixed menu of things the app is permitted to draft or stage.</li>
+        <li>An <strong>approval and preview UX</strong> so nothing reaches an athlete without your tap.</li>
+        <li>An <strong>audit log</strong> recording what was suggested, approved, and sent.</li>
+      </ul>
+      <p class="muted">Detail in the <a href="technical-design.html">technical design</a>.</p>
+    </details>
+
+    <p style="margin-top:6px"><strong>Unlocks:</strong> the habit of the app acting on your behalf safely, which is exactly the trust Wave 3 needs when it starts flagging videos for your attention.</p>
+  </div>
+</section>
+
+<!-- WAVE 3 -->
+<section class="section band">
+  <div class="wrap">
+    <span class="pill north">Wave 3 · North star</span>
+    <h2 style="margin-top:14px">See &amp; Correct</h2>
+    <p class="lead">The flagship. The app watches the reps athletes already film, gives instant feedback on the spot, and sends only the clips that really need your eyes to the top of your queue.</p>
+
+    <div class="grid grid-2" style="margin-top:30px">
+      <div class="card">
+        <h3 style="font-size:20px;margin-top:0">What ships</h3>
+        <ul class="clean">
+          <li><strong>On-device pose and action detection</strong> on form videos: the body is tracked right on the athlete's phone.</li>
+          <li><strong>Instant per-rep feedback</strong> and encouragement: "great depth, hold the top", "knees caving on the landing".</li>
+          <li>A <strong>coach triage queue</strong> that surfaces the few clips that genuinely need you, instead of all of them. <a href="04-vision-coaching.html">Pillar 04 →</a></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="font-size:20px;margin-top:0">Why this is last</h3>
+        <ul class="clean">
+          <li>It is the <strong>most technically involved</strong>: real on-device ML, tuned movement by movement.</li>
+          <li>It carries the <strong>highest privacy bar</strong>: on-device by design, and often young athletes. <a href="04-vision-coaching.html#privacy">How we handle it →</a></li>
+          <li>It is best built <strong>on top of the coaching knowledge</strong> from the earlier waves, so feedback reflects your standards, not a generic textbook.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="ba">
+      <div class="before">
+        <h4>Athlete feels</h4>
+        <p>Films a set and gets a coach-like response in seconds, every single rep, even at 11pm in the driveway.</p>
+      </div>
+      <div class="after">
+        <h4>Coach feels</h4>
+        <p>Your video queue stops being a wall of twelve clips. The app already gave the easy feedback and flagged the two that need a human. You spend your attention where it changes outcomes.</p>
+      </div>
+    </div>
+
+    <details>
+      <summary>Rough build scope</summary>
+      <ul class="clean">
+        <li><strong>On-device pose model</strong> integration (ML Kit or MediaPipe) so raw video stays on the phone.</li>
+        <li><strong>Movement-by-movement form rules</strong>, starting narrow with 2-3 movements (squat, jump shot, landing) and widening from there.</li>
+        <li><strong>Triage and flagging</strong> so coach attention is rationed to the clips that need it.</li>
+        <li><strong>Privacy and consent flows</strong>, treated as a core feature. <a href="04-vision-coaching.html#privacy">See pillar 04 →</a></li>
+      </ul>
+      <p class="muted">Detail in the <a href="technical-design.html">technical design</a>.</p>
+    </details>
+
+    <p style="margin-top:6px"><strong>Unlocks:</strong> the experience that makes Level Up unmistakable, an eye on every rep, grounded in everything captured in Waves 1 and 2.</p>
+  </div>
+</section>
+
+<!-- SUMMARY TABLE -->
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">At a glance</p>
+    <h2>The three waves on one page</h2>
+    <table>
+      <thead>
+        <tr><th>Wave</th><th>Pillars</th><th>Builds on</th><th>Main risk</th><th>Felt value</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="pill now">1 · Capture &amp; Assist</span></td>
+          <td><a href="01-coach-knowledge.html">01</a>, <a href="02-conversational-agents.html">02</a></td>
+          <td>Existing chat infrastructure</td>
+          <td>Getting your voice right; seeding enough knowledge</td>
+          <td>After-hours answers; replies pre-drafted</td>
+        </tr>
+        <tr>
+          <td><span class="pill next">2 · Generate &amp; Act</span></td>
+          <td><a href="03-agentic-actions.html">03</a></td>
+          <td>Wave 1 knowledge + existing workout data</td>
+          <td>Writes athlete-facing data; needs solid approval UX</td>
+          <td>Workouts drafted, not built from scratch</td>
+        </tr>
+        <tr>
+          <td><span class="pill north">3 · See &amp; Correct</span></td>
+          <td><a href="04-vision-coaching.html">04</a></td>
+          <td>Form videos already in the app; earlier trust</td>
+          <td>On-device ML accuracy; privacy bar with minors</td>
+          <td>Instant feedback per rep; smart coach triage</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="muted"><strong>A note on effort tags.</strong> <span class="pill ghost">S</span> <span class="pill ghost">M</span> <span class="pill ghost">L</span> are relative sizes, not calendar dates. Real timelines depend on who is building and how much time they have, so we commit to a sequence and a relative size, not to weeks. Wave 1 is M, Wave 2 is M, Wave 3 is L.</p>
+  </div>
+</section>
+
+<!-- BEFORE WAVE 1 -->
+<section class="section band-dark">
+  <div class="wrap">
+    <p class="eyebrow volt-eyebrow">Honest groundwork</p>
+    <h2>What we need before Wave 1</h2>
+    <p class="lead">A handful of decisions and a little setup come before the first feature. None of it is scary, but it is real, and naming it now keeps the build honest.</p>
+
+    <div class="grid grid-2" style="margin-top:30px">
+      <div class="card">
+        <h3 style="font-size:19px;margin-top:0">🤖 Pick the model</h3>
+        <p>Which LLM powers the companion. This drives quality, cost and where data goes. A recommendation lives in the <a href="technical-design.html">technical design</a>.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:19px;margin-top:0">🔌 The AI service layer</h3>
+        <p>A small backend (a Firebase function) that every AI feature calls through. Build it once, reuse it for all three waves.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:19px;margin-top:0">💸 Cost &amp; rate limits</h3>
+        <p>AI calls cost money per use. We set sensible per-user limits from day one so a bill never surprises us.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:19px;margin-top:0">📚 Seed the knowledge</h3>
+        <p>A short session with Benson to load the first real drills, cues and progressions. The companion is only as good as what we put in.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:19px;margin-top:0">🛡️ Safety &amp; moderation</h3>
+        <p>Light guardrails so the companion stays in its lane: coaching, encouragement, the app. Not medical advice, not off-topic chat.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:19px;margin-top:0">🎯 Define "your voice"</h3>
+        <p>A first pass at the persona: how you talk, what you would never say, your standards. We refine it as athletes use it.</p>
+      </div>
+    </div>
+
+    <div class="callout good" style="margin-top:34px;background:var(--ink-2);border-color:var(--good)">
+      <span class="label">The reassuring part</span>
+      <p style="color:#cfd6e4">Almost none of this is greenfield. The chat, the workouts, the videos, the user roles are all already in the app. The groundwork above is mostly choices and a thin new backend, not a rebuild. We are adding a brain to a body that already moves.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CLOSE -->
+<section class="section">
+  <div class="wrap center">
+    <p class="eyebrow">The throughline</p>
+    <h2 style="max-width:760px;margin:0 auto .4em">Start where it is cheap and certain. End where it is ambitious and unforgettable.</h2>
+    <p class="lead" style="max-width:680px;margin:0 auto">Every wave gives you time back and gives athletes coaching they would not otherwise get. That is the only test, and all three waves pass it.</p>
+    <p style="margin-top:30px"><a href="index.html" style="font-family:var(--display);font-weight:800;font-size:18px">← Back to the overview</a> &nbsp;·&nbsp; <a href="technical-design.html" style="font-family:var(--display);font-weight:800;font-size:18px">Read the technical design →</a></p>
+  </div>
+</section>
+
+<section class="section tight">
+  <div class="wrap">
+    <div class="pagenav">
+      <a href="04-vision-coaching.html"><span class="dir">← Previous</span><br><span class="ttl">04 · An eye on every rep</span></a>
+      <a class="next" href="technical-design.html"><span class="dir">Next →</span><br><span class="ttl">⚙ Technical design</span></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p class="brand">LEVEL UP<span style="color:var(--energy)">.</span></p>
+    <p>AI Vision &amp; Design · the roadmap · June 2026 · a living document, the sequence holds even as the detail changes.</p>
+    <p style="margin-bottom:0"><a href="index.html">Overview</a> · <a href="01-coach-knowledge.html">01</a> · <a href="02-conversational-agents.html">02</a> · <a href="03-agentic-actions.html">03</a> · <a href="04-vision-coaching.html">04</a> · <a href="technical-design.html">Technical design</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

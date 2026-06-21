@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Level Up AI - Technical Design</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <a class="brand" href="index.html">LEVEL&nbsp;UP<span class="dot">.</span> <span style="color:var(--text-soft);font-weight:600">Technical Design</span></a>
+    <span class="spacer"></span>
+    <a class="nav" href="index.html">Vision hub</a>
+    <a class="nav" href="05-roadmap.html">Roadmap</a>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="crumb" style="color:#aeb6c6"><a href="index.html" style="color:var(--volt-2);border:none">← Vision hub</a></p>
+    <span class="kicker">⚙ For the build team</span>
+    <h1>Technical design</h1>
+    <p class="lead">How the four pillars actually get built on the Level Up stack as it exists today: Flutter + Firebase, a service-locator architecture, a live chat pipeline, and a structured workout library. This is the engineering companion to the <a href="index.html" style="color:#fff">vision</a> - concrete enough to scope and estimate from, honest about the open decisions.</p>
+  </div>
+</header>
+
+<!-- STARTING POINT -->
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">Where we start from</p>
+    <h2>The stack today</h2>
+    <p>Everything below is designed to fit the architecture that's already in the repo, not a greenfield rewrite. The relevant facts:</p>
+
+    <table>
+      <thead><tr><th>Layer</th><th>What's there now</th><th>Implication for AI</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Client apps</strong></td><td>Flutter (3.7+), Material 3, GoRouter. Three apps: <code>level_up</code> (athlete), <code>level_up_coach</code> (coach), <code>level_up_web</code>.</td><td>AI surfaces are new screens/widgets + a new message author in existing flows.</td></tr>
+        <tr><td><strong>Shared</strong></td><td><code>level_up_shared</code> holds models &amp; services (<code>chat</code>, <code>workouts</code>, <code>users</code>, <code>auth</code>, <code>profile</code>).</td><td>AI client service belongs here, shared by all three apps.</td></tr>
+        <tr><td><strong>State</strong></td><td>No Bloc/Riverpod. Custom service-locator (<code>utils/locator.dart</code>) + RxDart <code>BehaviorSubject</code>/streams, consumed via <code>StreamBuilder</code>.</td><td>An <code>AiService</code> registered in the locator, exposing streams, fits the existing grain.</td></tr>
+        <tr><td><strong>Backend</strong></td><td>Firebase: Auth (Google/Apple), Firestore, Storage, Cloud Functions (TypeScript), Stripe. Project <code>level-up-e4147</code>, region <code>us-central1</code>.</td><td>AI calls run in Cloud Functions - keys stay server-side, never in the app bundle.</td></tr>
+        <tr><td><strong>Chat</strong></td><td>Live. <code>conversations/{id}/messages/{id}</code>, sealed <code>ChatMessage</code> (Text/Video), read receipts, paginated streams.</td><td>The companion is a new participant; needs one new message subtype.</td></tr>
+        <tr><td><strong>Library</strong></td><td><code>workouts/{id}</code> + <code>exercises/{id}</code>, sealed <code>Exercise</code> (timed/reps/repsWithWeight), video demos, the new <code>coachNote</code> field.</td><td>Ready-made retrieval corpus AND a writable target for agentic generation.</td></tr>
+        <tr><td><strong>Media</strong></td><td>Athletes upload form videos to <code>client-form-videos/{userId}/</code>; demos in Storage; image-resize function exists.</td><td>Pose pipeline has its input stream and an existing media habit.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <span class="label">Design stance</span>
+      <p>One new server-side <strong>AI service layer</strong> (Cloud Functions) + one new client-side <strong><code>AiService</code></strong> in <code>level_up_shared</code>, registered in the locator. Every pillar is a feature on top of those two additions. We add a brain to the existing body.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE OVERVIEW -->
+<section class="section band-dark">
+  <div class="wrap">
+    <p class="eyebrow volt-eyebrow">The shape of it</p>
+    <h2>Architecture at a glance</h2>
+    <p class="lead">Keys and model calls live behind Cloud Functions. The app never holds an API key and never calls a model directly.</p>
+
+    <div class="flow">
+      <div class="step"><span class="s-num">CLIENT</span><strong>Flutter app</strong><span>AiService (locator) → callable function. Streams results into StreamBuilder UI.</span></div>
+      <div class="arrow-h">→</div>
+      <div class="step"><span class="s-num">FUNCTIONS</span><strong>AI service layer</strong><span>Auth check, rate-limit, retrieve context, build prompt, call model, moderate, persist.</span></div>
+      <div class="arrow-h">→</div>
+      <div class="step"><span class="s-num">RETRIEVAL</span><strong>Knowledge + library</strong><span>Vector store of coach knowledge + Firestore workout/exercise data.</span></div>
+      <div class="arrow-h">→</div>
+      <div class="step"><span class="s-num">MODEL</span><strong>LLM / vision</strong><span>Text model for chat/agents; on-device pose for video.</span></div>
+    </div>
+
+    <div class="grid grid-2" style="margin-top:30px">
+      <div class="card">
+        <h3 style="font-size:19px">Why server-side</h3>
+        <p>API keys never ship in the app bundle (trivially extractable). Rate-limiting, cost control, prompt assembly, moderation, and audit logging all live in one place the client can't bypass. The existing functions setup (TypeScript, deployed to <code>us-central1</code>) is where this goes.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:19px">Why a shared AiService</h3>
+        <p>All three apps need AI surfaces. Putting <code>AiService</code> in <code>level_up_shared</code> beside <code>ChatService</code>/<code>WorkoutsService</code> and registering it in the locator means one implementation, three consumers - consistent with how every other service already works.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MODEL CHOICE -->
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">Open decision #1</p>
+    <h2>Which model(s)</h2>
+    <p>Two independent choices: the <strong>text model</strong> (pillars 01-03) and the <strong>vision/pose stack</strong> (pillar 04). They don't have to come from the same vendor.</p>
+
+    <h3>Text model (chat companion, coach assistant, workout generation)</h3>
+    <table>
+      <thead><tr><th>Option</th><th>Fit</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Google Gemini (Vertex AI / Firebase AI Logic)</strong></td><td>Strongest default</td><td>Native Firebase integration (Firebase AI Logic SDK), same GCP project &amp; billing as <code>level-up-e4147</code>, App Check support, strong tool-use. Lowest integration friction given we're already all-in on Firebase.</td></tr>
+        <tr><td><strong>Anthropic Claude</strong></td><td>Strong quality, esp. instruction-following &amp; tool-use</td><td>Excellent for the agentic pillar. Called from Functions via API. Adds a second vendor relationship.</td></tr>
+        <tr><td><strong>OpenAI GPT</strong></td><td>Capable, mature tooling</td><td>Mature function-calling + assistants tooling. Again a second vendor.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout volt">
+      <span class="label">Recommendation</span>
+      <p>Start with <strong>Gemini via Firebase AI Logic / Vertex</strong> for lowest friction and unified billing, but isolate the model behind a thin <code>LlmProvider</code> interface in the functions layer so swapping to Claude/GPT for a given task is a config change, not a rewrite. Model quality moves fast; don't hard-couple to one vendor.</p>
+    </div>
+
+    <h3>Vision / pose stack - covered in pillar 04</h3>
+    <p>On-device pose estimation (Google ML Kit Pose Detection or MediaPipe) rather than a cloud vision API, for both cost and privacy. Full rationale on the <a href="04-vision-coaching.html#privacy">form-coaching page</a>.</p>
+  </div>
+</section>
+
+<!-- RAG -->
+<section class="section band">
+  <div class="wrap">
+    <p class="eyebrow">Pillar 01 - the foundation</p>
+    <h2>Coach knowledge &amp; retrieval (RAG)</h2>
+    <p class="lead">A retrieval-augmented pipeline so answers are grounded in Benson's actual coaching, not generic fitness advice. Everything in pillars 02 and 03 grounds against this same store.</p>
+
+    <h3>The pipeline</h3>
+    <div class="flow">
+      <div class="step"><span class="s-num">1 · INGEST</span><strong>Capture</strong><span>Voice memos (transcribed), brain-dump prompts, existing exercise descriptions + coachNotes, past chat messages, imported docs.</span></div>
+      <div class="arrow-h">→</div>
+      <div class="step"><span class="s-num">2 · CHUNK + EMBED</span><strong>Index</strong><span>Split into passages, embed to vectors, store with metadata (topic, drill, skill level).</span></div>
+      <div class="arrow-h">→</div>
+      <div class="step"><span class="s-num">3 · RETRIEVE</span><strong>Search</strong><span>On a question, embed the query, pull top-k relevant passages.</span></div>
+      <div class="arrow-h">→</div>
+      <div class="step"><span class="s-num">4 · GENERATE</span><strong>Ground</strong><span>Pass retrieved passages + question to the LLM; answer cites/uses only that context.</span></div>
+    </div>
+
+    <h3>Where the vectors live</h3>
+    <ul class="clean">
+      <li><strong>Firestore vector search</strong> (native <code>find_nearest</code> / vector index) - keeps everything in the existing database and security model. Lowest new-infrastructure cost. Recommended starting point for a coach-sized corpus.</li>
+      <li><strong>Vertex AI Vector Search</strong> - scales further, more retrieval features, more setup. Reach for it only if the corpus or query volume outgrows Firestore vectors.</li>
+      <li><strong>Managed RAG (Vertex RAG Engine)</strong> - offloads chunking/embedding/retrieval if we'd rather not own the pipeline.</li>
+    </ul>
+
+    <div class="callout">
+      <span class="label">The real problem is capture, not retrieval</span>
+      <p>RAG is well-trodden. The feature succeeds or fails on whether knowledge actually gets <em>in</em> with near-zero effort from Benson. Prioritize the low-friction capture surfaces (voice → transcript, one-tap "explain this drill" prompts, auto-mining existing <code>coachNote</code> and chat history) over retrieval sophistication. A great retriever over an empty store answers nothing.</p>
+    </div>
+
+    <details>
+      <summary>Proposed Firestore shape</summary>
+      <pre><code>coachKnowledge/{docId}
+  coachId: string
+  source: 'voice' | 'chat' | 'exercise' | 'manual' | 'import'
+  topic: string          // e.g. "shooting", "defense"
+  text: string           // the passage
+  embedding: vector&lt;768&gt; // for find_nearest
+  createdAt, updatedAt
+  status: 'active' | 'archived'   // curate-able</code></pre>
+      <p style="margin-bottom:0">Embedding generated in a Function on write (Firestore trigger), mirroring the existing <code>resize-images</code> on-upload pattern. Per-coach scoping in security rules.</p>
+    </details>
+  </div>
+</section>
+
+<!-- CONVERSATIONAL -->
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">Pillars 02 &amp; 03 - chat &amp; agents</p>
+    <h2>Conversational + agentic layer</h2>
+
+    <h3>Riding the existing chat pipeline</h3>
+    <p>The companion is a new <strong>author</strong> in the existing <code>conversations/{id}/messages</code> stream. Minimal model change: extend the sealed <code>ChatMessage</code> hierarchy (or add an <code>authorType</code>) so the UI can render an AI-authored message distinctly and so we never confuse an AI draft with a human send.</p>
+    <details>
+      <summary>Message model delta</summary>
+      <pre><code>// existing: sealed ChatMessage -> TextChatMessage | VideoChatMessage
+// add a provenance marker rather than a whole new collection:
+authorType: 'human' | 'aiCompanion'   // on the message
+status?:    'draft' | 'sent'          // coach-side drafts await approval</code></pre>
+      <p style="margin-bottom:0">A coach-side draft is a message with <code>status: 'draft'</code> that is never delivered until Benson taps approve - this is the human-in-the-loop gate for pillar 02's draft-reply, shared with pillar 03's action approvals.</p>
+    </details>
+
+    <h3>Agentic actions (pillar 03) = tool use behind an approval gate</h3>
+    <p>The agent is given a small, explicit <strong>allow-list of tools</strong> (functions) it may call - e.g. <code>draftWorkout</code>, <code>proposeAssignment</code>, <code>summariseAthlete</code>. The model decides <em>which</em> tool and with <em>what</em> arguments; the Function executes only allow-listed tools, and anything athlete-facing is staged as a proposal that Benson approves.</p>
+    <table>
+      <thead><tr><th>Tool</th><th>Risk</th><th>Gate</th></tr></thead>
+      <tbody>
+        <tr><td><code>summariseAthlete</code>, <code>suggestDrills</code></td><td>Read-only</td><td>None - safe to run automatically</td></tr>
+        <tr><td><code>draftWorkout</code>, <code>draftReply</code></td><td>Creates a draft</td><td>Visible to coach; nothing sent/assigned</td></tr>
+        <tr><td><code>assignWorkout</code>, <code>sendMessage</code></td><td>Athlete-facing write</td><td>Explicit per-action approval + audit log entry</td></tr>
+      </tbody>
+    </table>
+    <div class="callout good">
+      <span class="label">Audit + guardrails</span>
+      <p>Every agent action writes an <code>aiActions/{id}</code> audit record (who, what tool, args, approved-by, when). Athlete-facing writes are impossible without an approval token. This is enforced in the Function, not the client - the gate is real only when the server rejects an unapproved write.</p>
+    </div>
+  </div>
+</section>
+
+<!-- VISION -->
+<section class="section band-dark">
+  <div class="wrap">
+    <p class="eyebrow volt-eyebrow">Pillar 04 - the flagship</p>
+    <h2>Pose &amp; action detection</h2>
+    <p class="lead">On-device first. Raw video stays on the athlete's phone; only abstract skeleton data or feedback leaves, and only if needed.</p>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h3 style="font-size:19px">Pose estimation - on device</h3>
+        <p><strong>Google ML Kit Pose Detection</strong> or <strong>MediaPipe Pose</strong>, running in the Flutter app via platform plugins. Produces per-frame skeletons (33 landmarks) locally. No raw video upload required. Free at the point of use - no per-call cloud vision cost.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:19px">Action / form analysis</h3>
+        <p>Interpret the skeleton over time: joint angles, tempo, range of motion, symmetry, rep counting. Start with a small set of <strong>rule-based form checks per movement</strong> (squat depth, knee valgus on landing, shooting-elbow alignment) before any learned action-recognition model. Ships value with far less ML risk.</p>
+      </div>
+    </div>
+
+    <h3>Why on-device matters here (cost AND privacy)</h3>
+    <ul class="clean">
+      <li><strong>Cost:</strong> cloud video inference is expensive per minute; on-device pose is effectively free and scales to every rep without a per-rep bill.</li>
+      <li><strong>Privacy:</strong> raw video of (often young) athletes never leaves the phone. Only the derived skeleton/feedback is optionally synced - and only with consent. This is the trust differentiator, detailed on the <a href="04-vision-coaching.html#privacy" style="color:#fff">form-coaching page</a>.</li>
+      <li><strong>Latency:</strong> instant on-device feedback during/after the rep, no round-trip.</li>
+    </ul>
+
+    <details style="background:var(--ink-2);border-color:var(--line-dark)">
+      <summary style="color:#fff">Heavier action-recognition, later</summary>
+      <pre><code>// Phase: rules over skeleton (squat, jump shot, landing)
+// Later: learned action recognition if rules hit a ceiling.
+//   - on-device tflite model for movement classification, OR
+//   - opt-in upload of *skeleton sequences only* (not video) for
+//     a cloud model - keeps raw video local even when scaling up.</code></pre>
+    </details>
+  </div>
+</section>
+
+<!-- CROSS-CUTTING -->
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">Cross-cutting concerns</p>
+    <h2>The things every pillar needs</h2>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h3 style="font-size:20px">💸 Cost &amp; rate limiting</h3>
+        <p>Per-user and per-coach quotas enforced in the Function. Cache embeddings and common answers. Prefer cheaper/smaller models for routine tasks, escalate to larger models only for hard ones. On-device for vision keeps the biggest cost center off the bill entirely.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:20px">🛡 Safety &amp; moderation</h3>
+        <p>Input + output moderation on the companion. Hard rules: no medical/injury/diagnosis advice - defer to coach or a professional. Grounding + an explicit "I'm not sure, ask your coach" fallback to curb hallucination. Extra care for minors.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:20px">🔐 Security &amp; access</h3>
+        <p>Firestore rules scope knowledge per coach and conversations per participant. App Check on the AI functions to block off-app abuse. Agent writes gated by approval tokens server-side. Keys only in Functions config / Secret Manager.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:20px">📊 Evaluation</h3>
+        <p>Before shipping the companion: a small eval set of real athlete questions + Benson's gold answers, scored for groundedness and tone. For pose: hand-labelled clips per movement to measure form-flag accuracy. Don't claim it works until measured against real cases.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <span class="label">Build-order rationale</span>
+      <p>The <a href="05-roadmap.html">roadmap</a> sequences these as Capture → Converse → Act → See for a reason: each leans on the last. The knowledge base (01) grounds the companion (02); the companion's draft-approve gate (02) is the same gate the agent needs (03); and the vision pillar (04) is best last because feedback is most useful when it can reference Benson's standards, and because it carries the highest privacy and ML-accuracy bar.</p>
+    </div>
+  </div>
+</section>
+
+<!-- OPEN QUESTIONS -->
+<section class="section band">
+  <div class="wrap">
+    <p class="eyebrow">Honest unknowns</p>
+    <h2>Open decisions to make before Wave 1</h2>
+    <ul class="clean">
+      <li><strong>Model vendor</strong> for text - Gemini (recommended for Firebase-native fit) vs Claude/GPT. Behind a provider interface either way.</li>
+      <li><strong>Vector store</strong> - Firestore native vectors (recommended start) vs Vertex Vector Search vs managed RAG.</li>
+      <li><strong>Capture surfaces</strong> - which one or two we build first (voice-to-text is highest leverage, but needs a transcription step).</li>
+      <li><strong>Persona</strong> - how much of Benson's voice/tone we configure explicitly vs let emerge from the knowledge base.</li>
+      <li><strong>Cost ceiling</strong> - a monthly AI budget that sets the quota math.</li>
+      <li><strong>Content seeding</strong> - a focused session with Benson to seed the initial knowledge base and triage the existing thin/placeholder Firestore content.</li>
+      <li><strong>Consent &amp; minors</strong> - the consent + parental-consent flows for pillar 04 should be specced before any video feature, not after.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section tight">
+  <div class="wrap">
+    <div class="pagenav">
+      <a href="05-roadmap.html"><span class="dir">← Prev</span><div class="ttl">05 · The phased roadmap</div></a>
+      <a class="next" href="index.html"><span class="dir">Back to →</span><div class="ttl">Vision hub</div></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p class="brand">LEVEL UP<span style="color:var(--energy)">.</span></p>
+    <p>Technical design · companion to the <a href="index.html">AI Vision</a> · June 2026. Open decisions are flagged as such; nothing here is final until measured against real cases.</p>
+  </div>
+</footer>
+
+</body>
+</html>
