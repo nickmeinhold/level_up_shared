@@ -1,0 +1,11 @@
+{
+  "hosting": {
+    "site": "level-up-ai-vision",
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "**/.*"
+    ]
+  }
+}
