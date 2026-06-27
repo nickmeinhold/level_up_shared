@@ -1,4 +1,5 @@
 import {Firestore} from 'firebase-admin/firestore';
+import {logger} from 'firebase-functions/v2';
 
 /**
  * The coach's voice profile — a small, hand-authored document that teaches
@@ -44,6 +45,37 @@ export interface CorpusExercise {
   sets?: number;
   time?: number;
   weight?: number;
+}
+
+const EXERCISE_TYPES: readonly ExerciseType[] = [
+  'timed', 'reps', 'repsWithWeight',
+];
+
+/**
+ * Validate an untrusted Firestore value as an {@link ExerciseType}.
+ *
+ * The literal-union types are only a compile-time contract; Firestore data is
+ * untyped, so the boundary needs a real runtime check. Returns undefined for
+ * anything outside the closed set (caller skips it — fail closed).
+ *
+ * @param {unknown} v the raw stored value.
+ * @return {ExerciseType | undefined} the validated type, or undefined.
+ */
+export function toExerciseType(v: unknown): ExerciseType | undefined {
+  return typeof v === 'string' &&
+    (EXERCISE_TYPES as readonly string[]).includes(v) ?
+    (v as ExerciseType) :
+    undefined;
+}
+
+/**
+ * Validate an untrusted Firestore value as a {@link WorkoutCategory} ordinal.
+ *
+ * @param {unknown} v the raw stored value.
+ * @return {WorkoutCategory | undefined} the validated ordinal, or undefined.
+ */
+export function toWorkoutCategory(v: unknown): WorkoutCategory | undefined {
+  return v === 0 || v === 1 || v === 2 ? v : undefined;
 }
 
 const categoryName = (category: number): string =>
@@ -150,7 +182,7 @@ export async function buildCoachCorpus(
   if (!profileSnap.exists) {
     throw new Error(`No coachProfile found for coachId ${coachId}`);
   }
-  const profile = profileSnap.data() as CoachProfile;
+  const profile = parseCoachProfile(profileSnap.data(), coachId);
 
   // TODO multi-coach: scope these queries by coachId.
   const [workoutsSnap, exercisesSnap] = await Promise.all([
@@ -158,17 +190,82 @@ export async function buildCoachCorpus(
     db.collection('exercises').get(),
   ]);
 
+  // Validate at the Firestore boundary: a doc with an out-of-set category/type
+  // is skipped (and logged) rather than blind-cast into the corpus — so unknown
+  // data never reaches the prompt, but one bad doc doesn't take down the coach.
   const workouts: CorpusWorkout[] = workoutsSnap.docs
-    .map((d) => ({id: d.id, ...(d.data() as Omit<CorpusWorkout, 'id'>)}))
+    .map((d) => {
+      const data = d.data();
+      const category = toWorkoutCategory(data.category);
+      if (category === undefined) {
+        logger.warn('Skipping workout with invalid category', {
+          id: d.id, category: data.category,
+        });
+        return undefined;
+      }
+      return {
+        id: d.id,
+        category,
+        description: String(data.description ?? ''),
+        exerciseIds: Array.isArray(data.exerciseIds) ? data.exerciseIds : [],
+      };
+    })
+    .filter((w): w is CorpusWorkout => w !== undefined)
     .sort((a, b) => a.id.localeCompare(b.id));
 
   const exercisesById = new Map<string, CorpusExercise>();
   for (const d of exercisesSnap.docs) {
+    const data = d.data();
+    const type = toExerciseType(data.type);
+    if (type === undefined) {
+      logger.warn('Skipping exercise with invalid type', {
+        id: d.id, type: data.type,
+      });
+      continue;
+    }
     exercisesById.set(d.id, {
       id: d.id,
-      ...(d.data() as Omit<CorpusExercise, 'id'>),
+      type,
+      title: String(data.title ?? ''),
+      subtitle: String(data.subtitle ?? ''),
+      description: String(data.description ?? ''),
+      reps: data.reps,
+      sets: data.sets,
+      time: data.time,
+      weight: data.weight,
     });
   }
 
   return formatCorpus(profile, workouts, exercisesById);
+}
+
+/**
+ * Validate an untrusted Firestore document as a {@link CoachProfile}.
+ *
+ * Unlike workouts/exercises (collections where one bad doc is skipped), the
+ * profile is the irreplaceable singleton — a malformed one means the companion
+ * has no voice, so this throws rather than degrading silently.
+ *
+ * @param {FirebaseFirestore.DocumentData | undefined} data the raw doc data.
+ * @param {string} coachId the coach id (for the error message).
+ * @return {CoachProfile} the validated profile.
+ */
+function parseCoachProfile(
+  data: FirebaseFirestore.DocumentData | undefined,
+  coachId: string,
+): CoachProfile {
+  const voiceDescription = data?.voiceDescription;
+  const principles = data?.principles;
+  const seedQAs = data?.seedQAs;
+  if (
+    typeof voiceDescription !== 'string' ||
+    !Array.isArray(principles) ||
+    !Array.isArray(seedQAs)
+  ) {
+    throw new Error(
+      `coachProfiles/${coachId} is malformed: expected voiceDescription ` +
+        '(string), principles (array), seedQAs (array).',
+    );
+  }
+  return {voiceDescription, principles, seedQAs};
 }

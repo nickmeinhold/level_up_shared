@@ -2,6 +2,8 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {
   formatCorpus,
+  toExerciseType,
+  toWorkoutCategory,
   CoachProfile,
   CorpusWorkout,
   CorpusExercise,
@@ -44,6 +46,22 @@ test('formatCorpus is deterministic (byte-stable for caching)', () => {
   const a = formatCorpus(profile, workouts, exercises);
   const b = formatCorpus(profile, workouts, exercises);
   assert.equal(a, b);
+});
+
+test('toExerciseType validates against the closed set', () => {
+  assert.equal(toExerciseType('reps'), 'reps');
+  assert.equal(toExerciseType('repsWithWeight'), 'repsWithWeight');
+  assert.equal(toExerciseType('garbage'), undefined);
+  assert.equal(toExerciseType(42), undefined);
+  assert.equal(toExerciseType(undefined), undefined);
+});
+
+test('toWorkoutCategory accepts only valid ordinals', () => {
+  assert.equal(toWorkoutCategory(0), 0);
+  assert.equal(toWorkoutCategory(2), 2);
+  assert.equal(toWorkoutCategory(3), undefined);
+  assert.equal(toWorkoutCategory('1'), undefined);
+  assert.equal(toWorkoutCategory(undefined), undefined);
 });
 
 test('formatCorpus skips exerciseIds with no matching exercise', () => {

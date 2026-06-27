@@ -52,7 +52,9 @@ export const askCoach = onCall(async (request) => {
   const projectId =
     process.env.GCLOUD_PROJECT ?? process.env.GOOGLE_CLOUD_PROJECT;
   if (!projectId) {
-    throw new HttpsError('internal', 'GCLOUD_PROJECT is not set.');
+    // Misconfiguration — log the detail, return a generic message.
+    logger.error('askCoach: GCLOUD_PROJECT/GOOGLE_CLOUD_PROJECT is not set.');
+    throw new HttpsError('internal', 'The coach is unavailable right now.');
   }
 
   try {

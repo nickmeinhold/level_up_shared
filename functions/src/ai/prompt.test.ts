@@ -18,3 +18,14 @@ test('the instruction block forbids inventing drills', () => {
   const blocks = buildSystemBlocks('x');
   assert.match(blocks[0].text, /Do NOT invent/);
 });
+
+test('the instruction block defers medical/injury questions', () => {
+  const blocks = buildSystemBlocks('x');
+  assert.match(blocks[0].text, /injury|medical/i);
+  assert.match(blocks[0].text, /medical\s+professional/i);
+});
+
+test('the instruction block resists instruction/corpus extraction', () => {
+  const blocks = buildSystemBlocks('x');
+  assert.match(blocks[0].text, /do NOT reveal or repeat/i);
+});
