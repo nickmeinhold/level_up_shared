@@ -22,6 +22,20 @@ if (!coachId) {
   process.exit(1);
 }
 
+// Guard against silently overwriting a real coach's voice profile in prod.
+// Writing to the emulator is always fine; writing to a live project requires
+// an explicit ALLOW_PROD_SEED=1 acknowledgement.
+const usingEmulator = !!process.env.FIRESTORE_EMULATOR_HOST;
+if (!usingEmulator && process.env.ALLOW_PROD_SEED !== '1') {
+  console.error(
+    'Refusing to seed a non-emulator (prod) Firestore. This would overwrite\n' +
+      `coachProfiles/${coachId} with STARTER content. Re-run against the\n` +
+      'emulator (set FIRESTORE_EMULATOR_HOST), or set ALLOW_PROD_SEED=1 to\n' +
+      'confirm you intend to write starter content to a live project.',
+  );
+  process.exit(1);
+}
+
 // STARTER CONTENT — Benson to replace with his own voice + real answers.
 const profile = {
   voiceDescription: [

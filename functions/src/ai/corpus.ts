@@ -14,20 +14,29 @@ export interface CoachProfile {
   seedQAs: { q: string; a: string }[];
 }
 
+/**
+ * Workout category, mirroring the Dart `WorkoutCategory` enum
+ * (lib/src/workouts/models/workout.dart) by ordinal.
+ */
+export const WORKOUT_CATEGORIES = ['Basketball', 'Strength', 'Fitness'] as const;
+export type WorkoutCategory = 0 | 1 | 2;
+
 /** A workout as stored at `workouts/{id}`. */
 export interface CorpusWorkout {
   id: string;
-  /** 0 = basketball, 1 = strength, 2 = fitness (WorkoutCategory enum). */
-  category: number;
+  /** Ordinal into {@link WORKOUT_CATEGORIES}. */
+  category: WorkoutCategory;
   description: string;
   exerciseIds: string[];
 }
 
+/** The closed set of exercise prescription shapes. */
+export type ExerciseType = 'timed' | 'reps' | 'repsWithWeight';
+
 /** An exercise as stored at `exercises/{id}`. */
 export interface CorpusExercise {
   id: string;
-  /** 'timed' | 'reps' | 'repsWithWeight'. */
-  type: string;
+  type: ExerciseType;
   title: string;
   subtitle: string;
   description: string;
@@ -37,10 +46,8 @@ export interface CorpusExercise {
   weight?: number;
 }
 
-const CATEGORY_NAMES = ['Basketball', 'Strength', 'Fitness'];
-
 const categoryName = (category: number): string =>
-  CATEGORY_NAMES[category] ?? `Category ${category}`;
+  WORKOUT_CATEGORIES[category] ?? `Category ${category}`;
 
 // One-line summary of an exercise's prescription (sets/reps/time/weight).
 const prescription = (ex: CorpusExercise): string => {
@@ -51,8 +58,14 @@ const prescription = (ex: CorpusExercise): string => {
     return `${ex.sets} sets x ${ex.reps} reps`;
   case 'repsWithWeight':
     return `${ex.sets} sets x ${ex.reps} reps @ ${ex.weight}kg`;
-  default:
+  default: {
+    // Compile-time exhaustiveness: adding an ExerciseType without a case here
+    // is a build error. At runtime an unexpected value emits no prescription
+    // line rather than garbage (fail closed).
+    const _exhaustive: never = ex.type;
+    void _exhaustive;
     return '';
+  }
   }
 };
 

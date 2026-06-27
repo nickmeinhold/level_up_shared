@@ -40,6 +40,15 @@ class AuthService {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
 
+  // OAuth web client id used to request a Firebase-audience idToken. Not a
+  // secret (it's a public client id), but lives here as a named constant.
+  static const _googleServerClientId =
+      '124874074089-58m6ah2jmacqecgrrossg1drhov2jior.apps.googleusercontent.com';
+
+  // google_sign_in 7 requires initialize() once per process before
+  // authenticate(); guard so repeated sign-in attempts don't re-initialize.
+  bool _googleSignInInitialized = false;
+
   final _userSubject = BehaviorSubject<Map<String, Object?>>.seeded({});
   StreamSubscription<Map<String, Object?>?>? profileStreamSubscription;
 
@@ -75,16 +84,25 @@ class AuthService {
       // Or use signInWithRedirect
       // return await FirebaseAuth.instance.signInWithRedirect(googleProvider);
     } else {
-      if (defaultTargetPlatform == TargetPlatform.android) {
+      // initialize() is required before authenticate() on ALL non-web
+      // platforms (iOS/macOS included), not just Android — call it once.
+      if (!_googleSignInInitialized) {
         await GoogleSignIn.instance.initialize(
-          serverClientId:
-              '124874074089-58m6ah2jmacqecgrrossg1drhov2jior.apps.googleusercontent.com',
+          serverClientId: _googleServerClientId,
         );
+        _googleSignInInitialized = true;
       }
 
-      // Trigger the authentication flow
-      final GoogleSignInAccount googleUser =
-          await GoogleSignIn.instance.authenticate();
+      // Trigger the authentication flow. authenticate() THROWS on user-cancel
+      // (where the old signIn() returned null), so swallow a cancel quietly
+      // rather than surfacing a dismissed sheet as a sign-in error.
+      final GoogleSignInAccount googleUser;
+      try {
+        googleUser = await GoogleSignIn.instance.authenticate();
+      } on GoogleSignInException catch (e) {
+        if (e.code == GoogleSignInExceptionCode.canceled) return;
+        rethrow;
+      }
 
       // Obtain the auth details from the request
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
