@@ -82,13 +82,18 @@ const categoryName = (category: number): string =>
   WORKOUT_CATEGORIES[category] ?? `Category ${category}`;
 
 // One-line summary of an exercise's prescription (sets/reps/time/weight).
+// Returns '' when a required number is missing — better no prescription line
+// than "undefined sets x undefineds" leaking into the prompt (fail closed).
 const prescription = (ex: CorpusExercise): string => {
   switch (ex.type) {
   case 'timed':
+    if (ex.sets == null || ex.time == null) return '';
     return `${ex.sets} sets x ${ex.time}s`;
   case 'reps':
+    if (ex.sets == null || ex.reps == null) return '';
     return `${ex.sets} sets x ${ex.reps} reps`;
   case 'repsWithWeight':
+    if (ex.sets == null || ex.reps == null || ex.weight == null) return '';
     return `${ex.sets} sets x ${ex.reps} reps @ ${ex.weight}kg`;
   default: {
     // Compile-time exhaustiveness: adding an ExerciseType without a case here
@@ -207,7 +212,9 @@ export async function buildCoachCorpus(
         id: d.id,
         category,
         description: String(data.description ?? ''),
-        exerciseIds: Array.isArray(data.exerciseIds) ? data.exerciseIds : [],
+        exerciseIds: Array.isArray(data.exerciseIds) ?
+          data.exerciseIds.filter((e): e is string => typeof e === 'string') :
+          [],
       };
     })
     .filter((w): w is CorpusWorkout => w !== undefined)

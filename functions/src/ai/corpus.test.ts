@@ -48,6 +48,21 @@ test('formatCorpus is deterministic (byte-stable for caching)', () => {
   assert.equal(a, b);
 });
 
+test('prescription is omitted (no "undefined") when required fields missing', () => {
+  const w: CorpusWorkout[] = [
+    {id: 'w-z', category: 1, description: 'Bad', exerciseIds: ['ex-bad']},
+  ];
+  const ex = new Map<string, CorpusExercise>([
+    ['ex-bad', {
+      id: 'ex-bad', type: 'timed', title: 'Broken drill',
+      subtitle: 'No numbers', description: 'Missing sets/time.',
+    }],
+  ]);
+  const out = formatCorpus(profile, w, ex);
+  assert.match(out, /Broken drill/);
+  assert.doesNotMatch(out, /undefined/);
+});
+
 test('toExerciseType validates against the closed set', () => {
   assert.equal(toExerciseType('reps'), 'reps');
   assert.equal(toExerciseType('repsWithWeight'), 'repsWithWeight');
