@@ -3,6 +3,7 @@ export 'src/chat/chat_screen.dart';
 export 'src/chat/text_message_view.dart';
 export 'src/chat/video_message_view.dart';
 export 'src/chat/chat_service.dart';
+export 'src/ai/ai_coach_service.dart';
 export 'src/workouts/models/workout.dart';
 export 'src/workouts/models/exercise.dart';
 export 'src/profile/profile_service.dart';
