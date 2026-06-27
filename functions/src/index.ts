@@ -7,3 +7,4 @@ export * from './resize-images';
 export * from './stripe/create-stripe-checkout-session';
 export * from './stripe/on-stripe-success-webhook';
 export * from './stripe/cancel-subscription';
+export * from './ai/ask-coach';
