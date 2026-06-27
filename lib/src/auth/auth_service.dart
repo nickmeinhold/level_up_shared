@@ -75,12 +75,23 @@ class AuthService {
       // Or use signInWithRedirect
       // return await FirebaseAuth.instance.signInWithRedirect(googleProvider);
     } else {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      final GoogleSignInAuthentication? googleAuth =
-          await googleUser?.authentication;
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        await GoogleSignIn.instance.initialize(
+          serverClientId:
+              '124874074089-58m6ah2jmacqecgrrossg1drhov2jior.apps.googleusercontent.com',
+        );
+      }
+
+      // Trigger the authentication flow
+      final GoogleSignInAccount googleUser =
+          await GoogleSignIn.instance.authenticate();
+
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+
+      // Create a new credential
       final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth?.accessToken,
-        idToken: googleAuth?.idToken,
+        idToken: googleAuth.idToken,
       );
 
       userCredential = await _auth.signInWithCredential(credential);
