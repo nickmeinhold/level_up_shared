@@ -38,10 +38,7 @@ export async function enforceCoachMembership(
   athleteUid: string,
   coachId: string,
 ): Promise<void> {
-  const snap = await db
-    .collection('coachMemberships').doc(athleteUid)
-    .collection('coaches').doc(coachId)
-    .get();
+  const snap = await db.doc(membershipDocPath(athleteUid, coachId)).get();
   if (!snap.exists) {
     throw new HttpsError(
       'permission-denied',

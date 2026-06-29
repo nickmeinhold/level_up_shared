@@ -5,29 +5,20 @@ import {HttpsError} from 'firebase-functions/v2/https';
 import {enforceCoachMembership, membershipDocPath} from './membership';
 
 /**
- * Minimal fake Firestore that follows exactly the chain
- * enforceCoachMembership walks (collection→doc→collection→doc→get), recording
- * each path segment and returning a configurable `exists`.
+ * Minimal fake Firestore that records the document path
+ * enforceCoachMembership reads and returns a configurable `exists`.
  *
  * @param {boolean} exists what the membership doc's `.exists` should report.
- * @param {string[]} captured receives each path segment, in walk order.
+ * @param {object} sink receives the looked-up document path as `sink.path`.
  * @return {Firestore} the fake, typed as Firestore for the call site.
  */
-function fakeDb(exists: boolean, captured: string[] = []): Firestore {
-  const leaf = {get: async () => ({exists})};
-  const coaches = {doc: (coachId: string) => {
-    captured.push(coachId); return leaf;
-  }};
-  const athleteDoc = {collection: (name: string) => {
-    captured.push(name); return coaches;
-  }};
-  const root = {collection: (name: string) => {
-    captured.push(name);
-    return {doc: (uid: string) => {
-      captured.push(uid); return athleteDoc;
-    }};
-  }};
-  return root as unknown as Firestore;
+function fakeDb(exists: boolean, sink: {path?: string} = {}): Firestore {
+  return {
+    doc: (path: string) => {
+      sink.path = path;
+      return {get: async () => ({exists})};
+    },
+  } as unknown as Firestore;
 }
 
 test('membershipDocPath builds the athlete->coach path', () => {
@@ -38,12 +29,11 @@ test('membershipDocPath builds the athlete->coach path', () => {
 });
 
 test('resolves and reads the membership doc for a member', async () => {
-  const captured: string[] = [];
-  await enforceCoachMembership(fakeDb(true, captured), 'athlete-1', 'benson');
-  assert.deepEqual(
-    captured,
-    ['coachMemberships', 'athlete-1', 'coaches', 'benson'],
-  );
+  const sink: {path?: string} = {};
+  await enforceCoachMembership(fakeDb(true, sink), 'athlete-1', 'benson');
+  // Enforcement must read exactly the path membershipDocPath builds — single
+  // source of truth for the security-critical doc location.
+  assert.equal(sink.path, 'coachMemberships/athlete-1/coaches/benson');
 });
 
 test('throws permission-denied when not a member', async () => {
