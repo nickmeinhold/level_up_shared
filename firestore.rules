@@ -1,0 +1,70 @@
+rules_version = '2';
+
+// Repo-authoritative Firestore security rules for level-up-e4147.
+//
+// Brought into the repo 2026-06-29 (previously console-only / unversioned) so
+// the trust boundary the askCoach membership check depends on is auditable and
+// deployable from source. Deploy: `firebase deploy --only firestore:rules`.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // write to your own profile, everyone can read
+    match /profiles/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
+    }
+
+    // conversation messages
+    match /conversations/{userId}/messages/{messageId} {
+      allow read, write: if request.auth.uid == userId || exists(/databases/$(database)/documents/coachIds/$(request.auth.uid));
+    }
+    // conversations
+    match /conversations/{userId} {
+      allow read, write: if request.auth.uid == userId || exists(/databases/$(database)/documents/coachIds/$(request.auth.uid));
+    }
+
+    // coaches
+    match /coachIds/{userId} {
+      allow read: if true;
+      allow write: if false; // Only admin can modify this
+    }
+    match /coachApplications/{userId} {
+      allow read, write: if request.auth.uid == userId;
+    }
+
+    // Workouts: coaches can write, everyone can read
+    match /workouts/{workoutId} {
+      allow read: if true;
+      allow write: if exists(/databases/$(database)/documents/coachIds/$(request.auth.uid));
+    }
+    // Exercises: coaches can write, everyone can read
+    match /exercises/{exerciseId} {
+      allow read: if true;
+      allow write: if exists(/databases/$(database)/documents/coachIds/$(request.auth.uid));
+    }
+
+    // subscriptions
+    match /subscriptions/{userId} {
+    	allow read: if request.auth.uid == userId;
+      allow write: if false; // Only admin can modify this
+    }
+
+    // AI coach entitlement: an athlete is connected to a coach iff
+    // coachMemberships/{athleteUid}/coaches/{coachId} exists. The athlete may
+    // READ their own memberships (e.g. to list their coaches), but writes are
+    // ALWAYS denied to clients — memberships are created server-side only (a
+    // Cloud Function / admin when a coach accepts an athlete), so the athlete
+    // cannot self-grant access to another coach's voice profile. This is the
+    // write-side guarantee that makes the askCoach `enforceCoachMembership`
+    // check sound (see functions/src/ai/membership.ts).
+    match /coachMemberships/{athleteUid}/coaches/{coachId} {
+      allow read: if request.auth.uid == athleteUid;
+      allow write: if false;
+    }
+
+  }
+}

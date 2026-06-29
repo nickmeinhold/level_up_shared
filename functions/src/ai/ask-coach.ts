@@ -4,6 +4,7 @@ import {getFirestore} from 'firebase-admin/firestore';
 import {logger} from 'firebase-functions/v2';
 import {buildCoachCorpus} from './corpus';
 import {buildSystemBlocks} from './prompt';
+import {enforceCoachMembership} from './membership';
 import {enforceRateLimit} from './rate-limit';
 
 // Bare Vertex model ID (no @date suffix). Opus 4.8 for dev quality; revisit
@@ -59,6 +60,12 @@ export const askCoach = onCall(async (request) => {
 
   try {
     const db = getFirestore();
+
+    // Authorize BEFORE any work: the athlete must be connected to this coach
+    // (server-side membership). Validates the client-supplied coachId rather
+    // than trusting it — closes the IDOR where any authenticated user could
+    // pull any coach's voice profile. Fail closed.
+    await enforceCoachMembership(db, request.auth.uid, coachId);
 
     // Fail CLOSED on abuse: a per-user cap (transactional, so concurrent calls
     // can't race past it) before the billable model invocation.
