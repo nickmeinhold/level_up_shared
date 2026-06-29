@@ -19,7 +19,8 @@ export interface CoachProfile {
  * Workout category, mirroring the Dart `WorkoutCategory` enum
  * (lib/src/workouts/models/workout.dart) by ordinal.
  */
-export const WORKOUT_CATEGORIES = ['Basketball', 'Strength', 'Fitness'] as const;
+export const WORKOUT_CATEGORIES =
+  ['Basketball', 'Strength', 'Fitness'] as const;
 export type WorkoutCategory = 0 | 1 | 2;
 
 /** A workout as stored at `workouts/{id}`. */

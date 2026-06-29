@@ -43,7 +43,10 @@ export function rateLimitDecision(
   if (state.count >= max) {
     return {allow: false};
   }
-  return {allow: true, nextState: {windowStart: state.windowStart, count: state.count + 1}};
+  return {
+    allow: true,
+    nextState: {windowStart: state.windowStart, count: state.count + 1},
+  };
 }
 
 /**
