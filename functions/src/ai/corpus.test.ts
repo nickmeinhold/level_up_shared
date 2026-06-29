@@ -48,7 +48,7 @@ test('formatCorpus is deterministic (byte-stable for caching)', () => {
   assert.equal(a, b);
 });
 
-test('prescription is omitted (no "undefined") when required fields missing', () => {
+test('prescription omitted (no "undefined") when fields missing', () => {
   const w: CorpusWorkout[] = [
     {id: 'w-z', category: 1, description: 'Bad', exerciseIds: ['ex-bad']},
   ];

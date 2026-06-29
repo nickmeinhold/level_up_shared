@@ -21,6 +21,7 @@ module.exports = {
   ignorePatterns: [
     '/lib/**/*', // Ignore built files.
     '/generated/**/*', // Ignore generated files.
+    '/scripts/**/*', // Operational scripts (run via tsx), not part of deploy.
   ],
   plugins: [
     '@typescript-eslint',
